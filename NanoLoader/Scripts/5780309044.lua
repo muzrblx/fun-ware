@@ -1,4 +1,3 @@
--- // Open Source -- \\
 local gmt = getrawmetatable(game)
 setreadonly(gmt, false)
 local oldindex = gmt.__index
@@ -19,6 +18,7 @@ local Window = Library:Create("Nanocore V2","Ass Jojo Game")
 local Main = Window:Tab("Item Notifier",true)
 local Misc2 = Window:Tab("Misc",true)
 local Misc = Window:Tab("Info",true)
+local Protect = Window:Tab("Protection",true)
 
 Main:Label("Enter your discord webhook URL and just wait")
 Main:Label("Toggle fruit sniper if you want to snipe the fruit first")
@@ -181,26 +181,12 @@ Misc2:Button("Teleport", function()
     client.Character.HumanoidRootPart.CFrame = tele[getgenv().selectedplace]
 end)
 
-Misc2:Slider("Walkspeed", 16, 60, function(t)
+Misc2:Slider("Walkspeed", 16, 200, function(t)
     client.Character.Humanoid.WalkSpeed = t
 end)
 
-Misc2:Toggle("Auto Equip Banknotes", function(t)
-    getgenv().autobank = t
-end)
-
-spawn(function()
-    while wait() do
-        if autobank then
-            for i, v in pairs(game.Players.LocalPlayer.Backpack:GetDescendants()) do
-                if v:IsA("Tool") and string.find(v.Name, "Banknote") then
-                    repeat wait()
-                    game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
-                    until not autobank
-                end
-            end
-        end
-    end
+Misc2:Slider("Walkspeed", 16, 100, function(t)
+    client.Character.Humanoid.JumpPower = t
 end)
 
 game.Workspace.ChildAdded:Connect(function(part)
@@ -231,49 +217,105 @@ game.Workspace.ChildAdded:Connect(function(part)
 end)
 
 
-Misc2:Toggle("Auto Use Arrow", function(y)
-    getgenv().ans = y
+
+local SF = Window:Tab("Stand Farming",true)
+
+local Stands = {
+    "Anubis",
+    "D4C",
+    "OMT",
+    "CrazyDiamond",
+    "DoppioKingCrimson",
+    "KillerQueen",
+    "GoldExperience",
+    "StarPlatinum",
+    "StarPlatinumTW",
+    "TheWorld",
+    "HierophantGreen",
+    "Whitesnake",
+    "TheWorldAlternateUniverse",
+    "WhitesnakeAU",
+    "KingCrimsonAU",
+    "SoftAndWetShiny",
+    "StarPlatinumOVA",
+    "TheWorldOVA",
+    "NTWAU",
+    "CreeperQueen",
+    "SPTW",
+    "StickyFingers",
+    "SoftAndWet"
+}
+
+SF:Dropdown("Stand Wanted", Stands, function(s)
+    getgenv().wantedstand = s
 end)
 
-Misc2:Toggle("Auto Use Roka", function(y)
-    getgenv().ansf = y
+SF:Slider("Farm Delay", 4,8,function(x)
+    getgenv().DelayInSeconds = x
 end)
+
+
+local function StandFarm()
+    pcall(function()
+        repeat
+            wait(Divided)
+            game:GetService("Players").LocalPlayer.Character.Humanoid:EquipTool(workspace:FindFirstChild("Rokakaka Fruit"))
+            game:GetService("Players").LocalPlayer.Character.Humanoid:EquipTool(game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Rokakaka Fruit"))
+            game:GetService("ReplicatedStorage").ItemEvents.Roka:FireServer()
+            wait(Divided)
+            game:GetService("Players").LocalPlayer.Character.Humanoid:EquipTool(workspace:FindFirstChild("Arrow"))
+            game:GetService("Players").LocalPlayer.Character.Humanoid:EquipTool(game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Arrow"))
+            game:GetService("ReplicatedStorage").ItemEvents.Arrow:FireServer()
+            wait(Divided)
+            game:GetService("ReplicatedStorage").Main.Input:FireServer("Alternate", "Appear", false)
+            game:GetService("ReplicatedStorage").Main.Input:FireServer("Alternate", "Dodge")
+            wait(Divided)
+        until game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true).Value:lower() == getgenv().WantedStand:lower() or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true).Name:lower() == getgenv().WantedStand:lower()
+    end)
+    if game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true) == nil then
+        StandFarm()
+    end
+end
+
+SF:Button("Stand Farming", function(x)
+    StandFarm()
+end)
+
+Protect:Toggle("Kick If Mod Joins", function(h)
+    getgenv().modjoin = h
+end)
+
+local admins = {
+    "NiceVoyage",
+    "hchnfhjfu",
+    "FalteringTrust",
+    "monotropics",
+    "TopsCapone",
+    "not_shur",
+    "oNoodlez",
+    "Celc1us",
+    "sallyismyworld",
+    "monosally"
+}
 
 
 spawn(function()
-    while wait() do
-        if ans then
-            repeat wait()
-                for i, v in pairs(game.Players.LocalPlayer.Backpack:GetDescendants()) do
-                    if v:IsA("Tool") and string.find(v.Name, "Arrow") then
-                        wait(5)
-                        game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
-                        wait()
-                        game:GetService("ReplicatedStorage").ItemEvents.Arrow:FireServer()
-                        wait(5)
+    pcall(function()
+        while wait() do
+            if modjoin then
+                game.Players.PlayerAdded:Connect(function(player)
+                    if table.find(admins, player.Name) then
+                        game.Players.LocalPlayer:Kick("A admin joined")
                     end
-                end
-            until not ans
+                end)
+            end
         end
-    end
+    end)
 end)
+
+
         
-spawn(function()
-    while wait() do
-        if ansf then
-            repeat wait()
-                for i, v in pairs(game.Players.LocalPlayer.Backpack:GetDescendants()) do
-                    if v:IsA("Tool") and string.find(v.Name, "Rokakaka Fruit") then
-                        game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
-                        wait(10)
-                        game:GetService("ReplicatedStorage").ItemEvents.Roka:FireServer()
-                        wait(5)
-                    end
-                end
-            until not ansf
-        end
-    end
-end)
+
         
                     
             
