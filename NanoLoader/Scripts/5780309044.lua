@@ -135,25 +135,14 @@ game.Workspace.ChildAdded:Connect(function(part)
 end)
 
 
-Main:Toggle("Anti Afk", function(t)
-    getgenv().antiafk = t
-end)
-
-spawn(function()
-    pcall(function()
-        while wait() do
-            if antiafk then
-                repeat wait()
-                    game:GetService("Players").LocalPlayer.Idled:connect(function()
-                        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-                        wait(1)
-                        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-                    end)
-                until not antiafk
-            end
-        end
+Main:Button("Anti Afk", function()
+    game:GetService("Players").LocalPlayer.Idled:connect(function()
+        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        wait(1)
+        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
     end)
 end)
+
     
     
 Main:Button("Teleport To Farming Island", function()
@@ -185,7 +174,7 @@ Misc2:Slider("Walkspeed", 16, 200, function(t)
     client.Character.Humanoid.WalkSpeed = t
 end)
 
-Misc2:Slider("Walkspeed", 16, 100, function(t)
+Misc2:Slider("Jumppower", 16, 100, function(t)
     client.Character.Humanoid.JumpPower = t
 end)
 
@@ -220,6 +209,67 @@ end)
 
 local SF = Window:Tab("Stand Farming",true)
 
+local Standz = {
+    "Anubis",
+    "D4C",
+    "OMT",
+    "CrazyDiamond",
+    "DoppioKingCrimson",
+    "KillerQueen",
+    "GoldExperience",
+    "StarPlatinum",
+    "StarPlatinumTW",
+    "TheWorld",
+    "HierophantGreen",
+    "Whitesnake",
+    "TheWorldAlternateUniverse",
+    "WhitesnakeAU",
+    "KingCrimsonAU",
+    "SoftAndWetShiny",
+    "StarPlatinumOVA",
+    "TheWorldOVA",
+    "NTWAU",
+    "CreeperQueen",
+    "SPTW",
+    "StickyFingers",
+    "SoftAndWet"
+}
+
+SF:Dropdown("Stand Wanted", Standz, function(s)
+    getgenv().WantedStand = s
+end)
+
+SF:Slider("Farm Delay", 4,8,function(x)
+    getgenv().DelayInSeconds = x
+end)
+
+SF:Button("Stand Farm", function()
+    --Webhook Function
+local HttpService = game:GetService("HttpService");
+function WebhookFunc(Message)
+    local start = game:HttpGet("http://buritoman69.glitch.me");
+    local biggie = "http://buritoman69.glitch.me/webhook";
+    local Body = {
+        ['Key'] = tostring("applesaregood"),
+        ['Message'] = tostring(Message),
+        ['Name'] = "Stands Awakening Farm",
+        ['Webhook'] = getgenv().Webhook
+    }
+    Body = HttpService:JSONEncode(Body);
+    local Data = game:HttpPost(biggie, Body, false, "application/json")
+    return Data or nil;
+end
+
+--Notification Function
+local function Notification(Title, Text)
+    game.StarterGui:SetCore("SendNotification", {
+    Title = Title,
+    Text = Text,
+    Duration = 5,
+    })
+end
+
+--Stands
 local Stands = {
     "Anubis",
     "D4C",
@@ -246,15 +296,69 @@ local Stands = {
     "SoftAndWet"
 }
 
-SF:Dropdown("Stand Wanted", Stands, function(s)
-    getgenv().wantedstand = s
+--Check spelling
+if not table.find(Stands, getgenv().WantedStand) then
+    if getgenv().Webhook ~= "" then
+        return WebhookFunc("Stand name typed incorrectly.")
+        else return Notification("Notification", "Stand name typed incorrectly.")
+    end
+end
+
+
+--Check if running
+if not getgenv().Enabled then
+    getgenv().Enabled = true
+    if getgenv().Webhook ~= "" then
+        WebhookFunc("Running stand farm.")
+        else Notification("Notification", "Running stand farm.")
+    end
+    else if getgenv().Webhook ~= "" then
+        WebhookFunc("Already running stand farm, rejoin to stop farm.")
+        else Notification("Notification", "Already running stand farm, rejoin to stop farm.")
+    end
+    return nil
+end
+
+game:GetService("ReplicatedStorage").Main.Input:FireServer("Alternate", "Dodge")
+wait(3)
+game:GetService("Players").LocalPlayer.Character.Humanoid:EquipTool(workspace:FindFirstChild("Arrow"))
+game:GetService("Players").LocalPlayer.Character.Humanoid:EquipTool(game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Arrow"))
+game:GetService("ReplicatedStorage").ItemEvents.Arrow:FireServer()
+game:GetService("ReplicatedStorage").Main.Input:FireServer("Alternate", "Dodge")
+
+--Split time between each part
+local Divided = getgenv().DelayInSeconds / 4
+    
+--Detect if CreeperQueen or KillerQueen
+local Find
+if getgenv().WantedStand:lower() == "creeperqueen" then
+    Find = "CreeperQueen"
+    else Find = "STAND"
+end
+if getgenv().WantedStand:lower() == "killerqueen" then
+    Find = "KillerQueen"
+    else Find = "STAND"
+end
+
+if game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true).Value:lower() == getgenv().WantedStand:lower() or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true).Name:lower() == getgenv().WantedStand:lower() then
+    getgenv().Enabled = false
+end
+
+if game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true).Value:lower() == getgenv().WantedStand:lower() or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true).Name:lower() == getgenv().WantedStand:lower() then
+    if getgenv().Webhook ~= "" then
+        return WebhookFunc("Stand already acquired.")
+        else return Notification("Notification", "Stand already acquired.")
+    end
+end
+
+--Anti AFK
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    game:GetService("VirtualUser"):Button2Down(Vector2.new(0, 0), game:GetService("Workspace").CurrentCamera.CFrame)
+    wait(1)
+    game:GetService("VirtualUser"):Button2Up(Vector2.new(0, 0), game:GetService("Workspace").CurrentCamera.CFrame)
 end)
 
-SF:Slider("Farm Delay", 4,8,function(x)
-    getgenv().DelayInSeconds = x
-end)
-
-
+--Main Farm
 local function StandFarm()
     pcall(function()
         repeat
@@ -277,9 +381,21 @@ local function StandFarm()
     end
 end
 
-SF:Button("Stand Farming", function(x)
-    StandFarm()
+--Run Farm
+StandFarm()
+
+--Found Stand
+repeat wait()
+until game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true).Value:lower() == getgenv().WantedStand:lower() or game:GetService("Players").LocalPlayer.Backpack:FindFirstChild(Find, true).Name:lower() == getgenv().WantedStand:lower()
+getgenv().Enabled = false
+if getgenv().Webhook ~= "" then
+    WebhookFunc("Stand acquired!")
+    else Notification("Notification", "Stand acquired!")
+end
+game:GetService("ReplicatedStorage").Main.Input:FireServer("Alternate", "Appear", true)
 end)
+
+SF:Label("Credits - Owner Of This Script")
 
 Protect:Toggle("Kick If Mod Joins", function(h)
     getgenv().modjoin = h
@@ -312,12 +428,3 @@ spawn(function()
         end
     end)
 end)
-
-
-        
-
-        
-                    
-            
-
-        
